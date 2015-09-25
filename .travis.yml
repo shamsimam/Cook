@@ -1,16 +1,20 @@
 language: java
-before_install:
-  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF
-  - echo "deb http://repos.mesosphere.io/ubuntu/ precise main" | sudo tee /etc/apt/sources.list.d/mesosphere.list
-  - sudo apt-get update -qq
-  - sudo apt-get install mesos
-sudo: required
+addons:
+  apt:
+    packages:
+      - libgflags2
+#       - libapr1
+sudo: false
 env:
   global:
-    - MESOS_NATIVE_JAVA_LIBRARY=/usr/lib/libmesos.so
+    - MESOS_VER=0.24.1
+    - MESOS_DIR=$PWD/mesos-${MESOS_VER}-linux-x86_64
+    - MESOS_NATIVE_JAVA_LIBRARY=$MESOS_DIR/lib/libmesos.so
     - CLJ_HTTP_ASYNC_POOL_TEST_DURATION_MULTIPLIER=5
   matrix:
     - TEST_DIR=scheduler DEPS_CMD='lein with-profiles +test deps' TEST_CMD='lein test :all'
     - TEST_DIR=jobclient DEPS_CMD='mvn dependency:resolve' TEST_CMD='mvn test'
+install:
+  - curl -L http://leifwalsh.com/mesos-$MESOS_VER-linux-x86_64.tar.gz | tar xz
 before_script: (cd $TEST_DIR && $DEPS_CMD)
 script: cd $TEST_DIR && $TEST_CMD
